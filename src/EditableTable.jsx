@@ -162,8 +162,10 @@ const EditableTable = () => {
                 <TableCell
                   id="add-column-button"
                   style={{
-                    backgroundColor: "#c5c5c5",
-                    borderBottom: "2px solid grey",
+                    position: "sticky",
+                    right: 0,
+                    backgroundColor: "  #c1c0b9",
+                    /* borderBottom: "2px solid grey", */
                   }}
                 >
                   <IconButton
@@ -210,6 +212,9 @@ const EditableTable = () => {
                   ))}
                   <TableCell
                     style={{
+                      position: "sticky",
+                      right: 0,
+                      backgroundColor: "#c1c0b9",
                       borderBottom: "1px solid #c5c5c5",
                     }}
                   >
