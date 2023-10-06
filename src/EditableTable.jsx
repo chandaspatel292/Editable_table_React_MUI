@@ -193,7 +193,7 @@ const EditableTable = () => {
                         variant="standard"
                         InputProps={{
                           disableUnderline: !(
-                            editingCell.row === rowIndex &&
+                            editingCell.row === rowIndex + startIndex &&
                             editingCell.col === colIndex
                           ),
                         }}
