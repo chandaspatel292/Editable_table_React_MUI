@@ -16,24 +16,31 @@ import AddIcon from "@mui/icons-material/Add";
 import ClearIcon from "@mui/icons-material/Clear";
 
 const EditableTable = () => {
+  // Initialize the initial state for the table
   const initialTableData = [
     ["", "", ""],
     ["", "", ""],
     ["", "", ""],
   ];
 
+  // Initialize the state for the table name
   const [TableName, setTableName] = useState("Untitled");
 
+  // Initialize the initial column names
   const initialColumnNames = ["Column 1", "Column 2", "Column 3"];
 
+  // Initialize the state for table data and column names
   const [tableData, setTableData] = useState(initialTableData);
   const [columnNames, setColumnNames] = useState(initialColumnNames);
 
+  // Initialize the state for the currently edited cell
   const [editingCell, setEditingCell] = useState({ row: -1, col: -1 });
 
+  // Initialize the state for the current page and define rows per page
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 5; // Change this to the desired number of rows per page
 
+  // Handle changes in the table name
   const handleTableNameBlur = (event) => {
     const updatedTableName = event.target.value;
     setTableName(updatedTableName);
@@ -88,18 +95,23 @@ const EditableTable = () => {
     setEditingCell({ row: -1, col: -1 });
   };
 
+  // Initialize state for deleted rows
   const [deletedRows, setDeletedRows] = useState([]);
+
+  // Initialize state for search-related features
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [searchedRows, setSearchedRows] = useState([]); // State to store searched rows
   const [searchValue, setSearchValue] = useState("");
 
+  // Function to handle search input changes
   const handleSearchChange = (query) => {
     setSearchValue(query);
     setSearchQuery(query);
     if (!query) {
       setFilteredData([]);
     } else {
+      // Filter the tableData based on the search query
       const filtered = tableData.filter((row) =>
         row.some((cell) => cell.toLowerCase().includes(query.toLowerCase()))
       );
@@ -114,9 +126,6 @@ const EditableTable = () => {
     const deletedRow = searchQuery
       ? searchedRows[rowIndex]
       : tableData[rowIndex];
-
-    console.log(rowIndex);
-    console.log(deletedRow);
 
     // Find the index of the first occurrence of the deleted row in tableData
     const firstOccurrenceIndex = tableData.findIndex((row) =>
@@ -161,6 +170,7 @@ const EditableTable = () => {
     setFilteredData(updatedFilteredData);
   };
 
+  // Calculate the total number of pages based on the number of rows and rows per page
   const totalPages = Math.ceil(tableData.length / rowsPerPage);
 
   // Function to handle page change
@@ -179,14 +189,17 @@ const EditableTable = () => {
     ? filteredData.slice(startIndex, endIndex)
     : tableData.slice(startIndex, endIndex);
 
+  // Determine the data to display based on search
   const displayData = searchQuery ? filteredData : currentPageData;
 
+  // Function to clear the search query
   const handleClearSearch = () => {
     setSearchQuery(""); // Clear the search query
     setSearchValue(""); // Clear the search input
     setFilteredData([]); // Clear the filtered data
   };
 
+  // Render the table component with appropriate UI elements
   return (
     <div style={{ marginLeft: "50px", maxWidth: "1200px" }}>
       <div
@@ -196,6 +209,7 @@ const EditableTable = () => {
           justifyContent: "space-between",
         }}
       >
+        {/* Input for editing the table name */}
         <input
           type="text"
           defaultValue={TableName}
@@ -209,6 +223,7 @@ const EditableTable = () => {
           }}
         />
         <div>
+          {/* Input for searching within the table */}
           <input
             type="text"
             placeholder="Search..."
@@ -232,6 +247,7 @@ const EditableTable = () => {
           <Table stickyHeader aria-label="sticky table">
             <TableHead style={{ alignItems: "center", height: "48px" }}>
               <TableRow>
+                {/* Render table column names and delete column buttons */}
                 {columnNames.map((columnName, colIndex) => (
                   <TableCell
                     key={colIndex}
@@ -247,6 +263,7 @@ const EditableTable = () => {
                         justifyContent: "left",
                       }}
                     >
+                      {/* Input for editing column names */}
                       <TextField
                         value={columnName}
                         variant="standard"
@@ -257,6 +274,7 @@ const EditableTable = () => {
                         }}
                         style={{ minWidth: "235px", fontWeight: "bold" }}
                       />
+                      {/* Button to delete the column */}
                       <IconButton onClick={() => deleteColumn(colIndex)}>
                         <DeleteIcon />
                       </IconButton>
@@ -272,20 +290,15 @@ const EditableTable = () => {
                     borderBottom: "1px solid grey",
                   }}
                 >
-                  <IconButton
-                    onClick={addColumn}
-                    /* style={{
-                      backgroundColor: "#1976d2",
-                      color: "white",
-                      fontWeight: "bold",
-                    }} */
-                  >
+                  {/* Button to add a new column */}
+                  <IconButton onClick={addColumn}>
                     <AddIcon />
                   </IconButton>
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody style={{ height: "calc(100% - 48px)" }}>
+              {/* Render table rows and cells */}
               {displayData.map((rowData, rowIndex) => (
                 <TableRow key={rowIndex}>
                   {rowData.map((cellValue, colIndex) => (
@@ -295,6 +308,7 @@ const EditableTable = () => {
                         borderBottom: "1px solid #c5c5c5",
                       }}
                     >
+                      {/* Input for editing cell values */}
                       <TextField
                         variant="standard"
                         InputProps={{
@@ -323,6 +337,7 @@ const EditableTable = () => {
                       borderLeft: "1px solid grey",
                     }}
                   >
+                    {/* Button to delete the row */}
                     <IconButton onClick={() => deleteRow(rowIndex)}>
                       <DeleteIcon />
                     </IconButton>
@@ -340,13 +355,8 @@ const EditableTable = () => {
             justifyContent: "space-between",
           }}
         >
-          <IconButton
-            onClick={addRow}
-            /* style={{
-              backgroundColor: "#1976d2",
-              color: "white",
-            }} */
-          >
+          <IconButton onClick={addRow}>
+            {/* Button to add a new row */}
             <AddIcon />
           </IconButton>
           <div
@@ -356,6 +366,7 @@ const EditableTable = () => {
               margin: "16px",
             }}
           >
+            {/* Pagination controls */}
             <Button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
@@ -383,4 +394,5 @@ const EditableTable = () => {
     </div>
   );
 };
+
 export default EditableTable;
