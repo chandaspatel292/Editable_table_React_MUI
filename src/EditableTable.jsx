@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
+import ClearIcon from "@mui/icons-material/Clear";
 
 const EditableTable = () => {
   const initialTableData = [
@@ -43,14 +44,24 @@ const EditableTable = () => {
   const addRow = () => {
     const newRow = Array(columnNames.length).fill("");
     setTableData([...tableData, newRow]);
+
+    // Update filteredData
+    const newFilteredData = [...filteredData, newRow];
+    setFilteredData(newFilteredData);
   };
 
   // Function to add a new column
   const addColumn = () => {
     const newColumnName = `Column ${columnNames.length + 1}`;
     setColumnNames([...columnNames, newColumnName]);
+
+    // Update tableData for all rows
     const newTableData = tableData.map((row) => [...row, ""]);
     setTableData(newTableData);
+
+    // Update filteredData for all rows
+    const newFilteredData = filteredData.map((row) => [...row, ""]);
+    setFilteredData(newFilteredData);
   };
 
   // Function to handle cell value changes
@@ -77,20 +88,77 @@ const EditableTable = () => {
     setEditingCell({ row: -1, col: -1 });
   };
 
+  const [deletedRows, setDeletedRows] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredData, setFilteredData] = useState([]);
+  const [searchedRows, setSearchedRows] = useState([]); // State to store searched rows
+  const [searchValue, setSearchValue] = useState("");
+
+  const handleSearchChange = (query) => {
+    setSearchValue(query);
+    setSearchQuery(query);
+    if (!query) {
+      setFilteredData([]);
+    } else {
+      const filtered = tableData.filter((row) =>
+        row.some((cell) => cell.toLowerCase().includes(query.toLowerCase()))
+      );
+      setFilteredData(filtered);
+      setSearchedRows(filtered); // Store searched rows
+    }
+  };
+
   // Function to delete a row
   const deleteRow = (rowIndex) => {
-    const updatedData = tableData.filter((_, i) => i !== rowIndex);
-    setTableData(updatedData);
+    // Determine the row to delete based on search results or all data
+    const deletedRow = searchQuery
+      ? searchedRows[rowIndex]
+      : tableData[rowIndex];
+
+    console.log(rowIndex);
+    console.log(deletedRow);
+
+    // Find the index of the first occurrence of the deleted row in tableData
+    const firstOccurrenceIndex = tableData.findIndex((row) =>
+      row.every((cell, colIndex) => cell === deletedRow[colIndex])
+    );
+
+    if (firstOccurrenceIndex !== -1) {
+      // Remove the first occurrence of the row from the main tableData
+      const updatedData = [...tableData];
+      updatedData.splice(firstOccurrenceIndex, 1);
+      setTableData(updatedData);
+
+      // Update filteredData (if search is active)
+      if (searchQuery) {
+        const updatedFilteredData = filteredData.filter(
+          (_, i) => i !== rowIndex
+        );
+        setFilteredData(updatedFilteredData);
+      }
+
+      // Add the deleted row to the deletedRows array
+      setDeletedRows([...deletedRows, deletedRow]);
+    }
   };
 
   // Function to delete a column
   const deleteColumn = (colIndex) => {
-    const updatedData = tableData.map((row) =>
+    // Update columnNames to remove the deleted column
+    const updatedColumnNames = columnNames.filter((_, i) => i !== colIndex);
+    setColumnNames(updatedColumnNames);
+
+    // Update tableData to remove the deleted column from each row
+    const updatedTableData = tableData.map((row) =>
       row.filter((_, i) => i !== colIndex)
     );
-    const updatedColumnNames = columnNames.filter((_, i) => i !== colIndex);
-    setTableData(updatedData);
-    setColumnNames(updatedColumnNames);
+    setTableData(updatedTableData);
+
+    // Update filteredData to remove the deleted column from each row
+    const updatedFilteredData = filteredData.map((row) =>
+      row.filter((_, i) => i !== colIndex)
+    );
+    setFilteredData(updatedFilteredData);
   };
 
   const totalPages = Math.ceil(tableData.length / rowsPerPage);
@@ -107,22 +175,58 @@ const EditableTable = () => {
   const endIndex = startIndex + rowsPerPage;
 
   // Get the data for the current page
-  const currentPageData = tableData.slice(startIndex, endIndex);
+  const currentPageData = searchQuery
+    ? filteredData.slice(startIndex, endIndex)
+    : tableData.slice(startIndex, endIndex);
+
+  const displayData = searchQuery ? filteredData : currentPageData;
+
+  const handleClearSearch = () => {
+    setSearchQuery(""); // Clear the search query
+    setSearchValue(""); // Clear the search input
+    setFilteredData([]); // Clear the filtered data
+  };
 
   return (
-    <div style={{ marginLeft: "50px" }}>
-      <input
-        type="text"
-        defaultValue={TableName}
-        onBlur={handleTableNameBlur}
+    <div style={{ marginLeft: "50px", maxWidth: "1200px" }}>
+      <div
         style={{
-          color: TableName === "Untitled" ? "grey" : "black",
-          border: "none",
-          outline: "none",
-          fontSize: "28px",
-          fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
-      />
+      >
+        <input
+          type="text"
+          defaultValue={TableName}
+          onBlur={handleTableNameBlur}
+          style={{
+            color: TableName === "Untitled" ? "grey" : "black",
+            border: "none",
+            outline: "none",
+            fontSize: "28px",
+            fontWeight: "bold",
+          }}
+        />
+        <div>
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            style={{
+              padding: "8px",
+              margin: "16px 0",
+              fontSize: "16px",
+            }}
+          />
+          {searchValue && ( // Render clear button when there's input
+            <IconButton onClick={handleClearSearch}>
+              <ClearIcon />
+            </IconButton>
+          )}
+        </div>
+      </div>
       <Paper sx={{ width: "100%", overflow: "hidden", maxWidth: "1200px" }}>
         <TableContainer sx={{ maxHeight: 620 }}>
           <Table stickyHeader aria-label="sticky table">
@@ -164,8 +268,8 @@ const EditableTable = () => {
                   style={{
                     position: "sticky",
                     right: 0,
-                    backgroundColor: "  #c1c0b9",
-                    /* borderBottom: "2px solid grey", */
+                    backgroundColor: "#c5c5c5",
+                    borderBottom: "1px solid grey",
                   }}
                 >
                   <IconButton
@@ -182,7 +286,7 @@ const EditableTable = () => {
               </TableRow>
             </TableHead>
             <TableBody style={{ height: "calc(100% - 48px)" }}>
-              {currentPageData.map((rowData, rowIndex) => (
+              {displayData.map((rowData, rowIndex) => (
                 <TableRow key={rowIndex}>
                   {rowData.map((cellValue, colIndex) => (
                     <TableCell
@@ -214,8 +318,9 @@ const EditableTable = () => {
                     style={{
                       position: "sticky",
                       right: 0,
-                      backgroundColor: "#c1c0b9",
-                      borderBottom: "1px solid #c5c5c5",
+                      backgroundColor: "#c5c5c5",
+                      borderBottom: "1px solid grey",
+                      borderLeft: "1px solid grey",
                     }}
                   >
                     <IconButton onClick={() => deleteRow(rowIndex)}>
@@ -278,5 +383,4 @@ const EditableTable = () => {
     </div>
   );
 };
-
 export default EditableTable;
